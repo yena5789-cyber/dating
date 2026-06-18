@@ -1,8 +1,13 @@
-import type { Candidate, ConnectionDegree } from "@/lib/candidates";
+import type { Candidate, ConnectionDegree, Gender } from "@/lib/candidates";
 import { candidates } from "@/lib/candidates";
 
 export const CANDIDATE_STORAGE_KEY = "enaverse:candidates";
 export const CANDIDATE_STORAGE_EVENT = "enaverse:candidates-updated";
+
+type StoredCandidate = Partial<Candidate> & {
+  personality?: string;
+  hobbies?: string;
+};
 
 export function getConnectionLabel(connectionDegree: ConnectionDegree) {
   const labels: Record<ConnectionDegree, string> = {
@@ -14,21 +19,42 @@ export function getConnectionLabel(connectionDegree: ConnectionDegree) {
   return labels[connectionDegree];
 }
 
-export function normalizeCandidate(candidate: Candidate): Candidate {
+function mergePersonalityAndHobbies(candidate: StoredCandidate) {
+  if (candidate.personalityAndHobbies) {
+    return candidate.personalityAndHobbies;
+  }
+
+  const personality = candidate.personality?.trim();
+  const hobbies = candidate.hobbies?.trim();
+
+  if (personality && hobbies) {
+    if (personality === hobbies) {
+      return `성격 및 취미: ${personality}`;
+    }
+
+    return `성격: ${personality} / 취미: ${hobbies}`;
+  }
+
+  return personality || hobbies || "추가 확인 필요";
+}
+
+export function normalizeCandidate(candidate: StoredCandidate): Candidate {
+  const connectionDegree = candidate.connectionDegree ?? "3촌";
+
   return {
-    ...candidate,
-    id: candidate.id.trim(),
-    birthYear: Number(candidate.birthYear),
-    height: candidate.height.trim(),
-    region: candidate.region.trim(),
-    jobCategory: candidate.jobCategory.trim(),
-    mbti: candidate.mbti.trim().toUpperCase(),
-    connectionLabel: getConnectionLabel(candidate.connectionDegree),
-    personality: candidate.personality.trim(),
-    hobbies: candidate.hobbies.trim(),
-    datingStyle: candidate.datingStyle.trim(),
-    preferredPartner: candidate.preferredPartner.trim(),
-    intro: candidate.intro.trim(),
+    id: candidate.id?.trim() ?? "",
+    birthYear: Number(candidate.birthYear ?? 1997),
+    gender: candidate.gender ?? ("여성" as Gender),
+    height: candidate.height?.trim() ?? "",
+    region: candidate.region?.trim() ?? "서울",
+    jobCategory: candidate.jobCategory?.trim() ?? "",
+    mbti: candidate.mbti?.trim().toUpperCase() ?? "",
+    connectionDegree,
+    connectionLabel: getConnectionLabel(connectionDegree),
+    personalityAndHobbies: mergePersonalityAndHobbies(candidate).trim(),
+    datingStyle: candidate.datingStyle?.trim() ?? "",
+    preferredPartner: candidate.preferredPartner?.trim() ?? "",
+    intro: candidate.intro?.trim() ?? "",
   };
 }
 
@@ -49,10 +75,10 @@ export function loadCandidates() {
     return candidates;
   }
 
-  return parsedCandidates.map((candidate) => normalizeCandidate(candidate as Candidate));
+  return parsedCandidates.map((candidate) => normalizeCandidate(candidate as StoredCandidate));
 }
 
-export function saveCandidates(nextCandidates: Candidate[]) {
+export function saveCandidates(nextCandidates: StoredCandidate[]) {
   const normalizedCandidates = nextCandidates.map(normalizeCandidate);
 
   window.localStorage.setItem(

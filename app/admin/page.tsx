@@ -22,8 +22,7 @@ const emptyCandidate: Candidate = {
   mbti: "",
   connectionDegree: "1촌",
   connectionLabel: "에나 직접 지인",
-  personality: "",
-  hobbies: "",
+  personalityAndHobbies: "",
   datingStyle: "",
   preferredPartner: "",
   intro: "",
@@ -36,8 +35,7 @@ const textFields: Array<{
     | "region"
     | "jobCategory"
     | "mbti"
-    | "personality"
-    | "hobbies"
+    | "personalityAndHobbies"
     | "datingStyle"
     | "preferredPartner"
     | "intro"
@@ -51,12 +49,11 @@ const textFields: Array<{
   { key: "jobCategory", label: "직군", placeholder: "예: 스타트업" },
   { key: "mbti", label: "MBTI", placeholder: "예: ENFP" },
   {
-    key: "personality",
-    label: "성격",
-    placeholder: "예: 긍정적 / 공감능력이 좋음 / 리액션 담당",
+    key: "personalityAndHobbies",
+    label: "성격 및 취미",
+    placeholder: "예: 성격은 긍정적이고 리액션이 좋음 / 취미는 여행, 방탈출, 영화",
     multiline: true,
   },
-  { key: "hobbies", label: "취미", placeholder: "예: 여행, 방탈출, 영화", multiline: true },
   {
     key: "datingStyle",
     label: "연애 스타일",

@@ -52,8 +52,7 @@ export function CandidateCard({ candidate, onRequest }: CandidateCardProps) {
       </div>
 
       <div className="grid gap-3">
-        <TextBlock label="성격" value={candidate.personality} />
-        <TextBlock label="취미" value={candidate.hobbies} />
+        <TextBlock label="성격 및 취미" value={candidate.personalityAndHobbies} />
         <TextBlock label="연애 스타일" value={candidate.datingStyle} />
         <TextBlock label="원하는 상대" value={candidate.preferredPartner} />
         <TextBlock label="한 줄 소개" value={candidate.intro} />
