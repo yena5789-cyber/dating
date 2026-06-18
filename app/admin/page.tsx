@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Candidate, ConnectionDegree, Gender } from "@/lib/candidates";
 import { candidates as initialCandidates } from "@/lib/candidates";
+import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "@/lib/constants";
 import {
   getConnectionLabel,
   loadCandidates,
@@ -90,10 +91,25 @@ export default function AdminPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<Candidate>(emptyCandidate);
   const [notice, setNotice] = useState("후보를 선택하거나 새 후보를 등록해 주세요.");
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [password, setPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   useEffect(() => {
     setCandidateList(loadCandidates());
+    setIsAuthorized(window.sessionStorage.getItem(ADMIN_SESSION_KEY) === "true");
   }, []);
+
+  const handlePasswordSubmit = () => {
+    if (password.trim() !== ADMIN_PASSWORD) {
+      setPasswordError("비밀번호가 맞지 않습니다.");
+      return;
+    }
+
+    window.sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
+    setIsAuthorized(true);
+    setPasswordError("");
+  };
 
   const sortedCandidates = useMemo(
     () => [...candidateList].sort((a, b) => a.id.localeCompare(b.id, "ko")),
@@ -179,6 +195,61 @@ export default function AdminPage() {
     setForm(emptyCandidate);
     setNotice("기본 후보 목록으로 되돌렸습니다.");
   };
+
+  if (!isAuthorized) {
+    return (
+      <main className="mx-auto flex min-h-screen w-full max-w-md items-center px-4 py-8">
+        <section className="w-full rounded-[2rem] border border-white/80 bg-white/90 p-5 shadow-[0_18px_45px_rgba(120,72,38,0.10)] backdrop-blur">
+          <p className="mb-2 inline-flex rounded-full bg-orange-100 px-4 py-2 text-sm font-extrabold text-orange-700">
+            에나버스 관리자
+          </p>
+          <h1 className="text-3xl font-black text-stone-950">비밀번호 입력</h1>
+          <p className="mt-3 rounded-3xl bg-orange-50 p-4 text-sm leading-6 text-stone-700">
+            후보군 관리 페이지는 관리자 비밀번호 입력 후 들어갈 수 있습니다.
+          </p>
+
+          <label className="mt-4 grid gap-2 text-sm font-bold text-stone-800">
+            비밀번호
+            <input
+              type="password"
+              value={password}
+              onChange={(event) => {
+                setPassword(event.target.value);
+                setPasswordError("");
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  handlePasswordSubmit();
+                }
+              }}
+              className="rounded-2xl border border-orange-100 bg-white px-4 py-3 font-semibold outline-none focus:border-orange-400"
+              placeholder="관리자 비밀번호"
+            />
+          </label>
+
+          {passwordError ? (
+            <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">
+              {passwordError}
+            </p>
+          ) : null}
+
+          <button
+            type="button"
+            onClick={handlePasswordSubmit}
+            className="mt-4 w-full rounded-2xl bg-stone-900 px-5 py-4 text-base font-extrabold text-white transition active:scale-[0.98]"
+          >
+            관리자 페이지로 들어가기
+          </button>
+          <a
+            href="/"
+            className="mt-3 block rounded-2xl bg-stone-100 px-5 py-4 text-center text-base font-extrabold text-stone-700 transition active:scale-[0.98]"
+          >
+            공개 페이지로 돌아가기
+          </a>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-5xl px-4 pb-16 pt-5 sm:px-6">

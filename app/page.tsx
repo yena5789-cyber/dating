@@ -7,6 +7,7 @@ import { RequestModal } from "@/components/RequestModal";
 import type { Candidate, ConnectionDegree, Gender } from "@/lib/candidates";
 import { candidates as initialCandidates } from "@/lib/candidates";
 import { CANDIDATE_STORAGE_EVENT, loadCandidates } from "@/lib/candidateStorage";
+import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "@/lib/constants";
 
 type FilterValue = "전체" | Gender | ConnectionDegree;
 
@@ -17,6 +18,9 @@ export default function Home() {
   const [managedCandidates, setManagedCandidates] = useState<Candidate[]>(initialCandidates);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [adminPassword, setAdminPassword] = useState("");
+  const [adminError, setAdminError] = useState("");
 
   useEffect(() => {
     const syncCandidates = () => setManagedCandidates(loadCandidates());
@@ -41,6 +45,16 @@ export default function Home() {
         candidate.gender === activeFilter || candidate.connectionDegree === activeFilter,
     );
   }, [activeFilter, managedCandidates]);
+
+  const handleAdminLogin = () => {
+    if (adminPassword.trim() !== ADMIN_PASSWORD) {
+      setAdminError("비밀번호가 맞지 않습니다.");
+      return;
+    }
+
+    window.sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
+    window.location.href = "/admin";
+  };
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-3xl px-4 pb-28 pt-5 sm:px-6 sm:pb-12">
@@ -134,13 +148,27 @@ export default function Home() {
       </section>
 
       <section className="mt-8 rounded-[2rem] border border-orange-100 bg-white/85 p-5 shadow-sm">
-        <h2 className="text-lg font-black text-stone-950">안심 안내</h2>
-        <p className="mt-3 text-sm leading-6 text-stone-700">
-          본 서비스는 지인 기반 비공개 소개 요청 서비스입니다.<br />
-          프로필 정보는 당사자의 동의를 받은 범위 내에서만 공개됩니다.<br />
-          사진 및 연락처는 양측 동의 후에만 전달됩니다.<br />
-          무단 캡처, 공유, 외부 유포를 금지합니다.
-        </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-black text-stone-950">안심 안내</h2>
+            <p className="mt-3 text-sm leading-6 text-stone-700">
+              본 서비스는 지인 기반 비공개 소개 요청 서비스입니다.<br />
+              프로필 정보는 당사자의 동의를 받은 범위 내에서만 공개됩니다.<br />
+              사진 및 연락처는 양측 동의 후에만 전달됩니다.<br />
+              무단 캡처, 공유, 외부 유포를 금지합니다.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setIsAdminOpen(true);
+              setAdminError("");
+            }}
+            className="shrink-0 rounded-full bg-stone-100 px-4 py-2 text-xs font-extrabold text-stone-600 transition active:scale-[0.98]"
+          >
+            관리자 모드
+          </button>
+        </div>
       </section>
 
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-orange-100 bg-white/92 p-3 shadow-[0_-12px_32px_rgba(120,72,38,0.10)] backdrop-blur sm:hidden">
@@ -152,6 +180,63 @@ export default function Home() {
           내 프로필 등록하기
         </button>
       </div>
+
+      {isAdminOpen ? (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-stone-950/45 px-3 pb-3 backdrop-blur-sm sm:items-center sm:p-6">
+          <section className="w-full max-w-md rounded-[2rem] bg-white p-5 shadow-2xl">
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-bold text-orange-600">관리자 모드</p>
+                <h2 className="mt-1 text-2xl font-black text-stone-950">비밀번호 입력</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAdminOpen(false)}
+                className="rounded-full bg-stone-100 px-3 py-2 text-sm font-bold text-stone-700"
+              >
+                닫기
+              </button>
+            </div>
+
+            <p className="rounded-3xl bg-orange-50 p-4 text-sm leading-6 text-stone-700">
+              후보군을 등록, 편집, 삭제하려면 관리자 비밀번호를 입력해 주세요.
+            </p>
+
+            <label className="mt-4 grid gap-2 text-sm font-bold text-stone-800">
+              비밀번호
+              <input
+                type="password"
+                value={adminPassword}
+                onChange={(event) => {
+                  setAdminPassword(event.target.value);
+                  setAdminError("");
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    handleAdminLogin();
+                  }
+                }}
+                className="rounded-2xl border border-orange-100 bg-white px-4 py-3 font-semibold outline-none focus:border-orange-400"
+                placeholder="관리자 비밀번호"
+              />
+            </label>
+
+            {adminError ? (
+              <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">
+                {adminError}
+              </p>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={handleAdminLogin}
+              className="mt-4 w-full rounded-2xl bg-stone-900 px-5 py-4 text-base font-extrabold text-white transition active:scale-[0.98]"
+            >
+              관리자 페이지로 이동
+            </button>
+          </section>
+        </div>
+      ) : null}
 
       <RequestModal
         candidate={selectedCandidate}
